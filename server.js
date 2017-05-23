@@ -3,6 +3,7 @@ var express = require('express'),
     fs      = require('fs'),
     app     = express(),
     eps     = require('ejs'),
+    bodyParser  = require('body-parser'),
     morgan  = require('morgan');
     
 Object.assign=require('object-assign')
@@ -34,7 +35,7 @@ if (mongoURL == null && process.env.DATABASE_SERVICE_NAME) {
 
   }
 }
-var db = null,
+/*var db = null,
     dbDetails = new Object();
 
 var initDb = function(callback) {
@@ -57,8 +58,24 @@ var initDb = function(callback) {
     console.log('Connected to MongoDB at: %s', mongoURL);
   });
 };
+*/
+var mongoose  = require('mongoose'),
+  apiRoutes = require('./route');
 
-app.get('/', function (req, res) {
+mongoose.connect(mongoURL); // connect to database
+
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  // we're connected!
+  console.log("connected successfully!!")
+});
+
+// use body parser so we can get info from POST and/or URL parameters
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+/*app.get('/', function (req, res) {
   // try to initialize the db on every request if it's not already
   // initialized.
   if (!db) {
@@ -90,17 +107,20 @@ app.get('/pagecount', function (req, res) {
     res.send('{ pageCount: -1 }');
   }
 });
-
+*/
 // error handling
 app.use(function(err, req, res, next){
   console.error(err.stack);
   res.status(500).send('Something bad happened!');
 });
 
-initDb(function(err){
+//REST API
+app.use('/api', apiRoutes);
+
+/*initDb(function(err){
   console.log('Error connecting to Mongo. Message:\n'+err);
 });
-
+*/
 app.listen(port, ip);
 console.log('Server running on http://%s:%s', ip, port);
 
